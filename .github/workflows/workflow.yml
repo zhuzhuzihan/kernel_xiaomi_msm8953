@@ -1,0 +1,56 @@
+name: Kernel Build (pixel experience-12 + AOSP Clang + SukiSU Ultra)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout source (pixel experience 12, shallow clone)
+        uses: actions/checkout@v4
+        with:
+          ref: twelve
+          fetch-depth: 1   # 只拉最新一次提交，加快速度
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            bc bison build-essential ccache curl flex git \
+            libncurses5-dev libssl-dev \
+            gcc-aarch64-linux-gnu gcc-arm-linux-gnueabi \
+            python3 unzip zip
+
+      - name: Download AOSP Clang (r450784d from android13-release)
+        run: |
+          git clone https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86 \
+            --depth=1 -b android13-release $HOME/aosp-clang
+
+      - name: Apply KernelSU (SukiSU Ultra)
+        run: |
+          curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash -s nongki
+
+      - name: Set environment
+        run: |
+          echo "PATH=$HOME/aosp-clang/clang-r450784d/bin:$PATH" >> $GITHUB_ENV
+          echo "ARCH=arm64" >> $GITHUB_ENV
+          echo "SUBARCH=arm64" >> $GITHUB_ENV
+          echo "CC=clang" >> $GITHUB_ENV
+          echo "CROSS_COMPILE=aarch64-linux-gnu-" >> $GITHUB_ENV
+          echo "CROSS_COMPILE_ARM32=arm-linux-gnueabi-" >> $GITHUB_ENV
+          echo "LLVM=1" >> $GITHUB_ENV
+          echo "LLVM_IAS=1" >> $GITHUB_ENV
+
+      - name: Build kernel
+        run: |
+          mkdir -p out
+          make O=out sakura_defconfig
+          make O=out -j$(nproc) KCFLAGS=-Wno-error
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Image.gz-dtb
+          path: out/arch/arm64/boot/Image.gz-dtb
