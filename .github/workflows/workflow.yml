@@ -23,10 +23,10 @@ jobs:
             gcc-aarch64-linux-gnu gcc-arm-linux-gnueabi \
             python3 unzip zip
 
-      - name: Download AOSP Clang (r450784d from android13-release)
+      - name: Download AOSP Clang (r416183b1 from android12-release)
         run: |
           git clone https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86 \
-            --depth=1 -b android13-release $HOME/aosp-clang
+            --depth=1 -b android12-release $HOME/aosp-clang
 
       - name: Apply KernelSU (SukiSU Ultra)
         run: |
@@ -34,7 +34,7 @@ jobs:
 
       - name: Set environment
         run: |
-          echo "PATH=$HOME/aosp-clang/clang-r450784d/bin:$PATH" >> $GITHUB_ENV
+          echo "PATH=$HOME/aosp-clang/clang-r416183b1/bin:$PATH" >> $GITHUB_ENV
           echo "ARCH=arm64" >> $GITHUB_ENV
           echo "SUBARCH=arm64" >> $GITHUB_ENV
           echo "CC=clang" >> $GITHUB_ENV
