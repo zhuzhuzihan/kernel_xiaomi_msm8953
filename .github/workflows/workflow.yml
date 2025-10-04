@@ -32,6 +32,10 @@ jobs:
         run: |
           curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash -s nongki
 
+      - name: Patch KernelSU Makefile (add gnu99 flag)
+        run: |
+          echo 'ccflags-y += -std=gnu99' >> drivers/kernelsu/Makefile
+
       - name: Set environment
         run: |
           echo "PATH=$HOME/aosp-clang/clang-r416183b1/bin:$PATH" >> $GITHUB_ENV
@@ -48,10 +52,6 @@ jobs:
           mkdir -p out
           make O=out sakura_defconfig
           make O=out -j$(nproc) KCFLAGS=-Wno-error
-
-      - name: Patch KernelSU Makefile (add gnu99 flag)
-        run: |
-          echo 'ccflags-y += -std=gnu99' >> drivers/kernelsu/Makefile
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
