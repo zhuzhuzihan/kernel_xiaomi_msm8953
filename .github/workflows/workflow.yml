@@ -49,6 +49,10 @@ jobs:
           make O=out sakura_defconfig
           make O=out -j$(nproc) KCFLAGS=-Wno-error
 
+      - name: Patch KernelSU Makefile (add gnu99 flag)
+        run: |
+          echo 'ccflags-y += -std=gnu99' >> drivers/kernelsu/Makefile
+
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
