@@ -1694,7 +1694,6 @@ static inline bool may_mandlock(void)
 #endif
 	return capable(CAP_SYS_ADMIN);
 }
-#endif
 
 static int can_umount(const struct path *path, int flags)
 {
