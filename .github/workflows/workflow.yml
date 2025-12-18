@@ -30,7 +30,7 @@ jobs:
 
       - name: Apply KernelSU (SukiSU Ultra)
         run: |
-          curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash -s nongki
+          curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash -s builtin
 
       - name: Patch KernelSU Makefile (add gnu99 flag)
         run: |
