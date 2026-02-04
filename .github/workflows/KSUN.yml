@@ -30,6 +30,7 @@ jobs:
         with:
           path: ~/aosp-clang
           key: aosp-clang-r416183b1 # 如果升级了 Clang 版本，请修改这个 key
+          save-always: true
 
       # --- 优化：仅在缓存未命中时下载 ---
       - name: Download AOSP Clang (r416183b1 from android12-release)
@@ -46,6 +47,7 @@ jobs:
           key: ccache-kernel-${{ runner.os }}-${{ github.ref }}
           restore-keys: |
             ccache-kernel-${{ runner.os }}-
+          save-always: true
 
       - name: Apply KernelSU (KernelSU Next)
         run: |
