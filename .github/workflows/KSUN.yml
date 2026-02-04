@@ -1,4 +1,4 @@
-name: Kernel Build (pixel experience-12 + AOSP Clang +Wildksu)
+name: Kernel Build (pixel experience-12 + AOSP Clang + KernelSU Next)
 
 on:
   workflow_dispatch:
@@ -47,9 +47,9 @@ jobs:
           restore-keys: |
             ccache-kernel-${{ runner.os }}-
 
-      - name: Apply KernelSU (Wild KSU)
+      - name: Apply KernelSU (KernelSU Next)
         run: |
-          curl -LSs "https://raw.githubusercontent.com/WildKernels/Wild_KSU/wild/kernel/setup.sh" | bash -s wild
+          curl -LSs "https://raw.githubusercontent.com/KernelSU-Next/KernelSU-Next/next/kernel/setup.sh" | bash -
 
       - name: Patch KernelSU Makefile (add gnu99 flag)
         run: |
