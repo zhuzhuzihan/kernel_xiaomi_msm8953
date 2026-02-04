@@ -1,0 +1,82 @@
+name: Kernel Build (pixel experience-12 + AOSP Clang +Wildksu)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout source (pixel experience 12, shallow clone)
+        uses: actions/checkout@v4
+        with:
+          ref: twelve
+          fetch-depth: 1   # 只拉最新一次提交，加快速度
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            bc bison build-essential ccache curl flex git \
+            libncurses5-dev libssl-dev \
+            gcc-aarch64-linux-gnu gcc-arm-linux-gnueabi \
+            python3 unzip zip
+
+      # --- 新增功能：缓存 AOSP Clang ---
+      - name: Cache AOSP Clang
+        id: cache-clang
+        uses: actions/cache@v4
+        with:
+          path: ~/aosp-clang
+          key: aosp-clang-r416183b1 # 如果升级了 Clang 版本，请修改这个 key
+
+      # --- 优化：仅在缓存未命中时下载 ---
+      - name: Download AOSP Clang (r416183b1 from android12-release)
+        if: steps.cache-clang.outputs.cache-hit != 'true'
+        run: |
+          git clone https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86 \
+            --depth=1 -b android12-release $HOME/aosp-clang
+
+      # --- 新增功能：配置 ccache ---
+      - name: Setup ccache
+        uses: actions/cache@v4
+        with:
+          path: ~/.ccache
+          key: ccache-kernel-${{ runner.os }}-${{ github.ref }}
+          restore-keys: |
+            ccache-kernel-${{ runner.os }}-
+
+      - name: Apply KernelSU (Wild KSU)
+        run: |
+          curl -LSs "https://raw.githubusercontent.com/WildKernels/Wild_KSU/wild/kernel/setup.sh" | bash -s wild
+
+      - name: Patch KernelSU Makefile (add gnu99 flag)
+        run: |
+          echo 'ccflags-y += -std=gnu99' >> drivers/kernelsu/Makefile
+
+      - name: Set environment
+        run: |
+          echo "PATH=$HOME/aosp-clang/clang-r416183b1/bin:$PATH" >> $GITHUB_ENV
+          echo "ARCH=arm64" >> $GITHUB_ENV
+          echo "SUBARCH=arm64" >> $GITHUB_ENV
+          # --- 修改：将 CC 指向 ccache，以加速编译 ---
+          echo "CC=ccache clang" >> $GITHUB_ENV
+          echo "CROSS_COMPILE=aarch64-linux-gnu-" >> $GITHUB_ENV
+          echo "CROSS_COMPILE_ARM32=arm-linux-gnueabi-" >> $GITHUB_ENV
+          echo "LLVM=1" >> $GITHUB_ENV
+          echo "LLVM_IAS=1" >> $GITHUB_ENV
+
+      - name: Build kernel
+        run: |
+          mkdir -p out
+          make O=out sakura_defconfig
+          # 显示一下 ccache 统计信息，方便查看缓存命中率
+          make O=out -j$(nproc) KCFLAGS=-Wno-error
+          ccache -s
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Image.gz-dtb
+          path: out/arch/arm64/boot/Image.gz-dtb
